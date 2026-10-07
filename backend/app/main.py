@@ -25,17 +25,38 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+import logging
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger("pdf360.api")
+
 cors_origins = settings.cors_origins_list
-allow_all = "*" in cors_origins
+allow_all = "*" in cors_origins or not cors_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[] if allow_all else cors_origins,
-    allow_origin_regex=".*" if allow_all else None,
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all else cors_origins,
+    allow_credentials=False if allow_all else True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled Exception on {request.method} {request.url.path}: {exc}\n{traceback.format_exc()}")
+    response = JSONResponse(
+        status_code=500,
+        content={"detail": str(exc) if settings.DEBUG else "Internal server error. Check backend logs."},
+    )
+    # Ensure CORS headers are present even on uncaught 500 crashes
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)

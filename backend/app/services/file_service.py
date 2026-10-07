@@ -26,7 +26,19 @@ class FileService:
     def __init__(self, db: Session):
         self.db = db
         self.files = FileRepository(db)
-        self.storage = get_storage_provider()
+        self._storage = None
+
+    @property
+    def storage(self):
+        if self._storage is None:
+            try:
+                self._storage = get_storage_provider()
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to initialize storage provider: {e}. Falling back to local.")
+                from app.services.storage.local import LocalStorageProvider
+                self._storage = LocalStorageProvider("/tmp/storage")
+        return self._storage
 
     def upload(self, *, owner_id: uuid.UUID, filename: str, mime_type: str, file_obj: BinaryIO) -> File:
         if mime_type not in ALLOWED_MIME_TYPES:

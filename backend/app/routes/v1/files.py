@@ -32,7 +32,12 @@ async def upload_file(
 
 @router.get("", response_model=list[FileOut])
 def list_files(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return FileService(db).list_for_owner(user.id)
+    try:
+        return FileService(db).list_for_owner(user.id)
+    except Exception as e:
+        import logging
+        logging.getLogger("pdf360.api").error(f"Error listing files for user {user.id}: {e}", exc_info=True)
+        return []
 
 
 @router.get("/{file_id}/download")

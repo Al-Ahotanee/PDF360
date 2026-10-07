@@ -10,6 +10,7 @@ Usage in a route:
 closed over the required permission string, so RBAC checks read declaratively
 at the route signature instead of as if-statements inside handler bodies.
 """
+import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -30,7 +31,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             detail="Could not validate credentials.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user = UserRepository(db).get_by_id(payload["sub"])
+    try:
+        user_uuid = uuid.UUID(payload["sub"]) if isinstance(payload["sub"], str) else payload["sub"]
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload structure.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = UserRepository(db).get_by_id(user_uuid)
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive.")
     return user
