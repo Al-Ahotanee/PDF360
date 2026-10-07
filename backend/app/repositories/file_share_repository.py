@@ -65,8 +65,7 @@ class FileShareRepository:
         )
         self.db.add(share)
         self.db.commit()
-        self.db.refresh(share)
-        return share
+        return self.get_by_id(share.id)
 
     def delete(self, share: FileShare) -> None:
         self.db.delete(share)
