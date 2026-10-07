@@ -15,13 +15,17 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def get_storage_provider() -> StorageProvider:
-    if settings.STORAGE_PROVIDER == "s3":
-        if settings.S3_BUCKET_NAME and settings.S3_ACCESS_KEY:
+    # If explicitly set to s3 OR if AWS/Neon credentials are provided in the environment
+    has_s3_creds = bool(settings.effective_s3_access_key and settings.effective_s3_secret_key)
+    use_s3 = settings.STORAGE_PROVIDER == "s3" or (has_s3_creds and settings.S3_BUCKET_NAME)
+
+    if use_s3:
+        if settings.S3_BUCKET_NAME and has_s3_creds:
             from app.services.storage.s3 import S3StorageProvider
             return S3StorageProvider()
         else:
             logger.warning(
-                "STORAGE_PROVIDER=s3 is set but S3_BUCKET_NAME or S3_ACCESS_KEY is missing. "
+                "S3 storage credentials detected or requested, but S3_BUCKET_NAME is missing. "
                 "Falling back to local storage temporarily."
             )
             return LocalStorageProvider(settings.LOCAL_STORAGE_PATH)

@@ -42,6 +42,28 @@ class Settings(BaseSettings):
     S3_REGION: str | None = None
     S3_ENDPOINT_URL: str | None = None
 
+    # Native AWS / Neon environment variable aliases
+    AWS_ENDPOINT_URL_S3: str | None = None
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    AWS_REGION: str | None = None
+
+    @property
+    def effective_s3_endpoint_url(self) -> str | None:
+        return self.S3_ENDPOINT_URL or self.AWS_ENDPOINT_URL_S3
+
+    @property
+    def effective_s3_access_key(self) -> str | None:
+        return self.S3_ACCESS_KEY or self.AWS_ACCESS_KEY_ID
+
+    @property
+    def effective_s3_secret_key(self) -> str | None:
+        return self.S3_SECRET_KEY or self.AWS_SECRET_ACCESS_KEY
+
+    @property
+    def effective_s3_region(self) -> str | None:
+        return self.S3_REGION or self.AWS_REGION
+
     # --- CORS ---
     CORS_ORIGINS: str = "http://localhost:3000"
 

@@ -22,14 +22,14 @@ class S3StorageProvider(StorageProvider):
 
         kwargs = {
             "service_name": "s3",
-            "aws_access_key_id": settings.S3_ACCESS_KEY,
-            "aws_secret_access_key": settings.S3_SECRET_KEY,
+            "aws_access_key_id": settings.effective_s3_access_key,
+            "aws_secret_access_key": settings.effective_s3_secret_key,
             "config": s3_config,
         }
-        if settings.S3_REGION:
-            kwargs["region_name"] = settings.S3_REGION
-        if settings.S3_ENDPOINT_URL:
-            kwargs["endpoint_url"] = settings.S3_ENDPOINT_URL
+        if settings.effective_s3_region:
+            kwargs["region_name"] = settings.effective_s3_region
+        if settings.effective_s3_endpoint_url:
+            kwargs["endpoint_url"] = settings.effective_s3_endpoint_url
 
         self.client = session.client(**kwargs)
 
