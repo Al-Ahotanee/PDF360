@@ -39,7 +39,44 @@ ROLE_PERMISSION_MAP = {
 }
 
 
+# Predefined demo & default users for seeding
+# Safe default password for seed users: "Password123!"
+DEFAULT_USERS = [
+    {
+        "email": "superadmin@pdf360.internal",
+        "full_name": "PDF360 Super Administrator",
+        "role_name": "super_admin",
+        "is_active": True,
+        "is_verified": True,
+    },
+    {
+        "email": "admin@pdf360.internal",
+        "full_name": "PDF360 Organization Admin",
+        "role_name": "admin",
+        "is_active": True,
+        "is_verified": True,
+    },
+    {
+        "email": "pro@pdf360.internal",
+        "full_name": "Alex Mercer (Pro Plan)",
+        "role_name": "premium_user",
+        "is_active": True,
+        "is_verified": True,
+    },
+    {
+        "email": "demo@pdf360.internal",
+        "full_name": "Demo User (Free Plan)",
+        "role_name": "registered_user",
+        "is_active": True,
+        "is_verified": True,
+    },
+]
+
+
 def seed() -> None:
+    from app.core.security import hash_password
+    from app.models.user import User
+
     db = SessionLocal()
     try:
         permissions_by_code = {}
@@ -51,6 +88,7 @@ def seed() -> None:
                 db.flush()
             permissions_by_code[code] = perm
 
+        roles_by_name = {}
         for role_name in DEFAULT_ROLES:
             role = db.query(Role).filter_by(name=role_name).first()
             if role is None:
@@ -58,9 +96,29 @@ def seed() -> None:
                 db.add(role)
                 db.flush()
             role.permissions = [permissions_by_code[c] for c in ROLE_PERMISSION_MAP[role_name]]
+            roles_by_name[role_name] = role
+
+        # Seed default users idempotently
+        default_hashed_pw = hash_password("Password123!")
+        users_created = 0
+        for u_data in DEFAULT_USERS:
+            existing = db.query(User).filter_by(email=u_data["email"]).first()
+            if existing is None:
+                role = roles_by_name[u_data["role_name"]]
+                user_obj = User(
+                    email=u_data["email"],
+                    hashed_password=default_hashed_pw,
+                    full_name=u_data["full_name"],
+                    role_id=role.id,
+                    is_active=u_data["is_active"],
+                    is_verified=u_data["is_verified"],
+                )
+                db.add(user_obj)
+                users_created += 1
 
         db.commit()
         print(f"Seeded {len(DEFAULT_ROLES)} roles and {len(DEFAULT_PERMISSIONS)} permissions.")
+        print(f"Seeded {users_created} new users ({len(DEFAULT_USERS)} total configured).")
     finally:
         db.close()
 
