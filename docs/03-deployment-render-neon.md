@@ -66,7 +66,9 @@ This guide covers deploying PDF360 to **Render.com** using the provided Infrastr
    - `pdf360-worker` (Background Worker, Docker)
    - `pdf360-frontend` (Web Service, Docker)
    - `pdf360-redis` (Redis Instance)
-5. Under `pdf360-api`, paste your Neon `DATABASE_URL` copied from Step 2.
+5. In the Blueprint form:
+   - Under **`pdf360-api`**, paste your Neon **`DATABASE_URL`** copied from Step 2.
+   - Under **`pdf360-frontend`**, you can provide your **`NEXT_PUBLIC_API_BASE_URL`** (e.g. `https://pdf360-api.onrender.com/api/v1` or update it after the API service URL is generated).
 6. Click **Apply**.
 7. Render will automatically build the images, launch the services, and wire up internal networking!
 

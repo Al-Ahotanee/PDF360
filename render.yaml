@@ -66,12 +66,9 @@ services:
         sync: false
       - key: S3_ENDPOINT_URL
         sync: false
-      # CORS: Allow requests from the frontend service
+      # CORS: Allow requests from frontend (set to * or specific frontend domain)
       - key: CORS_ORIGINS
-        fromService:
-          type: web
-          name: pdf360-frontend
-          property: url
+        value: "*"
 
   # ---------------------------------------------------------------------------
   # 2. Celery Background Worker (Asynchronous PDF operations)
@@ -160,11 +157,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Public URL of the FastAPI backend (e.g. https://pdf360-api.onrender.com/api/v1)
       - key: NEXT_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: pdf360-api
-          property: url
+        sync: false
+
 
   # ---------------------------------------------------------------------------
   # 4. Redis Service

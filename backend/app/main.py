@@ -25,13 +25,18 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+cors_origins = settings.cors_origins_list
+allow_all = "*" in cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=[] if allow_all else cors_origins,
+    allow_origin_regex=".*" if allow_all else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(files_router, prefix=settings.API_V1_PREFIX)
