@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useJob } from "@/hooks/useJob";
 import { apiClient } from "@/lib/api/client";
@@ -48,12 +49,20 @@ export function JobStatusPanel({ jobId }: { jobId: string | null }) {
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         {resultFileId && (
-          <button
-            onClick={() => downloadResultFile(resultFileId)}
-            className="rounded-lg bg-ink px-3 py-1.5 text-xs font-medium text-white hover:bg-ink-light"
-          >
-            Download result
-          </button>
+          <>
+            <button
+              onClick={() => downloadResultFile(resultFileId)}
+              className="rounded-lg bg-ink px-3 py-1.5 text-xs font-medium text-white hover:bg-ink-light"
+            >
+              Download result
+            </button>
+            <Link
+              href={`/editor?file=${resultFileId}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-ink dark:text-slate-200"
+            >
+              Open in Editor
+            </Link>
+          </>
         )}
         {resultFileIds?.map((id, i) => (
           <button

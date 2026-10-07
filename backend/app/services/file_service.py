@@ -35,9 +35,9 @@ class FileService:
                 self._storage = get_storage_provider()
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).error(f"Failed to initialize storage provider: {e}. Falling back to local.")
+                logging.getLogger(__name__).error(f"Failed to initialize storage provider: {e}. Falling back to configured local path.")
                 from app.services.storage.local import LocalStorageProvider
-                self._storage = LocalStorageProvider("/tmp/storage")
+                self._storage = LocalStorageProvider(settings.LOCAL_STORAGE_PATH)
         return self._storage
 
     def upload(self, *, owner_id: uuid.UUID, filename: str, mime_type: str, file_obj: BinaryIO) -> File:

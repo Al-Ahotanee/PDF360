@@ -47,7 +47,8 @@ export function PageEditor({ initialFileId, page = 1 }: { initialFileId: string;
 
   const isSaving = addHighlight.isPending || addTextBox.isPending || addStickyNote.isPending || addFreehand.isPending
     || addUnderline.isPending || addStrikethrough.isPending || addWhiteout.isPending;
-  const previewUrl = `${apiClient.defaults.baseURL}/files/${fileId}/preview/${page}`;
+  const token = typeof window !== "undefined" ? window.localStorage.getItem("pdf360_access_token") : null;
+  const previewUrl = `${apiClient.defaults.baseURL}/files/${fileId}/preview/${page}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 
   function getRelativePoint(e: React.MouseEvent) {
     const rect = imgRef.current!.getBoundingClientRect();

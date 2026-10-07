@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/layout/Topbar";
 import { FileSelect } from "@/components/tools/FileSelect";
 import { PageEditor } from "@/components/tools/PageEditor";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function EditorPage() {
-  const [fileId, setFileId] = useState("");
+function EditorContent() {
+  const searchParams = useSearchParams();
+  const fileParam = searchParams.get("file") || "";
+  const [fileId, setFileId] = useState(fileParam);
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (fileParam && fileParam !== fileId) {
+      setFileId(fileParam);
+      setPage(1);
+    }
+  }, [fileParam]);
 
   return (
     <>
@@ -46,3 +56,12 @@ export default function EditorPage() {
     </>
   );
 }
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 p-6">Loading editor…</div>}>
+      <EditorContent />
+    </Suspense>
+  );
+}
+

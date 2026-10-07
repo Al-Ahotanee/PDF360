@@ -44,11 +44,21 @@ def list_files(db: Session = Depends(get_db), user: User = Depends(get_current_u
 def download_file(file_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service = FileService(db)
     file = service.get_accessible_file(file_id=file_id, user_id=user.id)
-    stream = service.storage.open_stream(file.storage_key)
+    try:
+        content = service.read_bytes(file)
+    except Exception as e:
+        import logging
+        logging.getLogger("pdf360.api").error(f"Failed to read file {file_id} ({file.storage_key}): {e}", exc_info=True)
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="File content could not be retrieved from storage.")
+
     return StreamingResponse(
-        stream,
-        media_type=file.mime_type,
-        headers={"Content-Disposition": f'attachment; filename="{file.original_filename}"'},
+        io.BytesIO(content),
+        media_type=file.mime_type or "application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{file.original_filename}"',
+            "Content-Length": str(len(content)),
+        },
     )
 
 

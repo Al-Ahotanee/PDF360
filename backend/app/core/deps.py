@@ -11,7 +11,7 @@ closed over the required permission string, so RBAC checks read declaratively
 at the route signature instead of as if-statements inside handler bodies.
 """
 import uuid
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -20,10 +20,21 @@ from app.db.session import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+def get_current_user(
+    token_header: str | None = Depends(oauth2_scheme),
+    token_query: str | None = Query(None, alias="token"),
+    db: Session = Depends(get_db),
+) -> User:
+    token = token_header or token_query
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     payload = decode_token(token)
     if payload is None or payload.get("type") != "access":
         raise HTTPException(

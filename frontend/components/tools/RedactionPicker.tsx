@@ -29,7 +29,8 @@ export function RedactionPicker({
   const [current, setCurrent] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  const previewUrl = `${apiClient.defaults.baseURL}/files/${fileId}/preview/${page}`;
+  const token = typeof window !== "undefined" ? window.localStorage.getItem("pdf360_access_token") : null;
+  const previewUrl = `${apiClient.defaults.baseURL}/files/${fileId}/preview/${page}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 
   function toPdfPoints(px: number) {
     return (px / PREVIEW_DPI) * PDF_POINTS_PER_INCH;

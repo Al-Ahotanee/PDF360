@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+    CELERY_ALWAYS_EAGER: bool = True
 
     # --- Storage ---
     STORAGE_PROVIDER: str = "local"  # "local" | "s3"
