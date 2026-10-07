@@ -10,10 +10,9 @@ FROM node:20-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_API_BASE_URL must be set at build time — Next.js inlines
-# NEXT_PUBLIC_* vars into the client bundle, not read at runtime.
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
-ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# NEXT_PUBLIC_API_BASE_URL is passed as build arg or read from environment
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 RUN npm run build
 
 FROM node:20-slim AS runner
