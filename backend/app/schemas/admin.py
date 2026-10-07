@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -44,3 +45,20 @@ class AnalyticsOut(BaseModel):
     total_jobs: int
     premium_subscribers: int
     total_revenue: float
+
+
+class FeatureFlagOut(BaseModel):
+    key: str
+    value: dict
+    description: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class FeatureFlagSetRequest(BaseModel):
+    key: str
+    value: dict
+    description: str | None = None
+

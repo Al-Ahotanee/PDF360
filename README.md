@@ -139,3 +139,13 @@ pdf360/
     types/           shared TypeScript types
   docs/              requirements, architecture, database, API, deployment
 ```
+
+## Cloud Deployment (Render Blueprint + Neon PostgreSQL)
+
+PDF360 includes a production-ready Infrastructure as Code blueprint (`render.yaml`) for 1-click deployment on [Render](https://render.com):
+
+1. Connect your repository to Render -> Create a new **Blueprint**.
+2. Supply your free [Neon PostgreSQL](https://neon.tech) connection string (`DATABASE_URL`).
+3. Render automatically provisions the FastAPI API, Next.js frontend, Celery worker, and Redis queue.
+4. See [`docs/03-deployment-render-neon.md`](docs/03-deployment-render-neon.md) for full instructions, including Cloudflare R2 / AWS S3 cloud storage setup.
+

@@ -83,3 +83,36 @@ export function useAdminAuditLogs() {
     queryFn: async () => (await apiClient.get<AuditLogEntry[]>("/admin/audit-logs")).data,
   });
 }
+
+export type FeatureFlag = {
+  key: string;
+  value: Record<string, unknown>;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function useAdminFeatureFlags() {
+  return useQuery({
+    queryKey: ["admin", "feature-flags"],
+    queryFn: async () => (await apiClient.get<FeatureFlag[]>("/admin/feature-flags")).data,
+  });
+}
+
+export function useSetFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { key: string; value: Record<string, unknown>; description?: string | null }) =>
+      (await apiClient.put<FeatureFlag>("/admin/feature-flags", payload)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "feature-flags"] }),
+  });
+}
+
+export function useDeleteFeatureFlag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (key: string) => (await apiClient.delete(`/admin/feature-flags/${key}`)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "feature-flags"] }),
+  });
+}
+

@@ -38,7 +38,7 @@ def list_files(db: Session = Depends(get_db), user: User = Depends(get_current_u
 @router.get("/{file_id}/download")
 def download_file(file_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service = FileService(db)
-    file = service.get_owned_file(file_id=file_id, owner_id=user.id)
+    file = service.get_accessible_file(file_id=file_id, user_id=user.id)
     stream = service.storage.open_stream(file.storage_key)
     return StreamingResponse(
         stream,
@@ -50,7 +50,7 @@ def download_file(file_id: uuid.UUID, db: Session = Depends(get_db), user: User 
 @router.get("/{file_id}/page-count")
 def get_page_count_endpoint(file_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service = FileService(db)
-    file = service.get_owned_file(file_id=file_id, owner_id=user.id)
+    file = service.get_accessible_file(file_id=file_id, user_id=user.id)
     from app.services.pdf_engine.core import get_page_count
 
     return {"page_count": get_page_count(service.read_bytes(file))}
@@ -64,7 +64,7 @@ def preview_page(file_id: uuid.UUID, page_number: int, db: Session = Depends(get
     guessing PDF point coordinates blind.
     """
     service = FileService(db)
-    file = service.get_owned_file(file_id=file_id, owner_id=user.id)
+    file = service.get_accessible_file(file_id=file_id, user_id=user.id)
     from app.services.pdf_engine.conversion import pdf_to_images
     from app.services.pdf_engine.core import PDFEngineError
 

@@ -36,8 +36,9 @@ out/
 *.tsbuildinfo
 
 # Storage / uploads
-storage/
-backend/storage/
+/storage/
+/backend/storage/
+
 
 # Testing & coverage
 .pytest_cache/

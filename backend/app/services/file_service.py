@@ -59,6 +59,22 @@ class FileService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found.")
         return file
 
+    def get_accessible_file(
+        self,
+        *,
+        file_id: uuid.UUID,
+        user_id: uuid.UUID,
+        required_permission=None,
+    ) -> File:
+        from app.models.file_share import SharePermission
+        from app.services.file_access import has_at_least
+
+        perm = required_permission or SharePermission.VIEW
+        file = self.files.get_by_id(file_id)
+        if file is None or not has_at_least(self.db, file=file, user_id=user_id, required=perm):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found or access denied.")
+        return file
+
     def read_bytes(self, file: File) -> bytes:
         return self.storage.read(file.storage_key)
 

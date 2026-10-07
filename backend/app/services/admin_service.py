@@ -91,3 +91,21 @@ class AdminService:
             "premium_subscribers": premium_subs,
             "total_revenue": float(revenue),
         }
+
+    def list_feature_flags(self):
+        from app.repositories.system_config_repository import SystemConfigRepository
+        return SystemConfigRepository(self.db).list_all()
+
+    def set_feature_flag(self, *, key: str, value: dict, description: str | None = None, actor_id: uuid.UUID | None = None):
+        from app.repositories.system_config_repository import SystemConfigRepository
+        cfg = SystemConfigRepository(self.db).set_key(key=key, value=value, description=description)
+        self._write_audit(actor_id, "admin.feature_flag.set", "system_configuration", cfg.id, {"key": key, "value": value})
+        return cfg
+
+    def delete_feature_flag(self, *, key: str, actor_id: uuid.UUID | None = None) -> bool:
+        from app.repositories.system_config_repository import SystemConfigRepository
+        deleted = SystemConfigRepository(self.db).delete_key(key)
+        if deleted:
+            self._write_audit(actor_id, "admin.feature_flag.deleted", "system_configuration", None, {"key": key})
+        return deleted
+

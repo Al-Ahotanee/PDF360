@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
-import type { DashboardStats, Job, PDFFile } from "@/types/api";
+import type { ActivityLogEntry, DashboardStats, Job, PDFFile } from "@/types/api";
 
 export function useDashboardStats() {
   return useQuery({
@@ -22,5 +22,12 @@ export function useRecentJobs() {
   return useQuery({
     queryKey: ["dashboard", "recent-jobs"],
     queryFn: async () => (await apiClient.get<Job[]>("/dashboard/recent-jobs")).data,
+  });
+}
+
+export function useDashboardActivity() {
+  return useQuery({
+    queryKey: ["dashboard", "activity"],
+    queryFn: async () => (await apiClient.get<ActivityLogEntry[]>("/dashboard/activity")).data,
   });
 }

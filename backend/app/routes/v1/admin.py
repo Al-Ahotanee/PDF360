@@ -6,7 +6,16 @@ from sqlalchemy.orm import Session
 from app.core.deps import require_permission
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.admin import AnalyticsOut, AuditLogOut, RoleOut, SetActiveRequest, SetRoleRequest, SystemHealthOut
+from app.schemas.admin import (
+    AnalyticsOut,
+    AuditLogOut,
+    FeatureFlagOut,
+    FeatureFlagSetRequest,
+    RoleOut,
+    SetActiveRequest,
+    SetRoleRequest,
+    SystemHealthOut,
+)
 from app.schemas.auth import UserOut
 from app.services.admin_service import AdminService
 
@@ -55,3 +64,29 @@ def system_health(db: Session = Depends(get_db), _: User = Depends(require_permi
 @router.get("/analytics", response_model=AnalyticsOut)
 def analytics(db: Session = Depends(get_db), _: User = Depends(require_permission("admin:system:manage"))):
     return AdminService(db).analytics()
+
+
+@router.get("/feature-flags", response_model=list[FeatureFlagOut])
+def list_feature_flags(db: Session = Depends(get_db), _: User = Depends(require_permission("admin:system:manage"))):
+    return AdminService(db).list_feature_flags()
+
+
+@router.put("/feature-flags", response_model=FeatureFlagOut)
+def set_feature_flag(
+    data: FeatureFlagSetRequest,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("admin:system:manage")),
+):
+    return AdminService(db).set_feature_flag(
+        key=data.key, value=data.value, description=data.description, actor_id=actor.id
+    )
+
+
+@router.delete("/feature-flags/{key}", status_code=204)
+def delete_feature_flag(
+    key: str,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("admin:system:manage")),
+):
+    AdminService(db).delete_feature_flag(key=key, actor_id=actor.id)
+

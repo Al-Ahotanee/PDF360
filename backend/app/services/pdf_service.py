@@ -34,15 +34,19 @@ class PDFService:
         self.jobs = JobRepository(db)
         self.files = FileRepository(db)
 
-    def _assert_owns_all(self, owner_id: uuid.UUID, file_ids: list[uuid.UUID]) -> None:
+    def _assert_owns_all(self, owner_id: uuid.UUID, file_ids: list[uuid.UUID], required_permission=None) -> None:
+        from app.models.file_share import SharePermission
+        from app.services.file_access import has_at_least
+        perm = required_permission or SharePermission.EDIT
+
         found = self.files.get_many_by_ids(file_ids)
         found_ids = {f.id for f in found}
         missing = set(file_ids) - found_ids
         if missing:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Files not found: {missing}")
-        not_owned = [f.id for f in found if f.owner_id != owner_id]
-        if not_owned:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own all requested files.")
+        for f in found:
+            if not has_at_least(self.db, file=f, user_id=owner_id, required=perm):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have required permission for all requested files.")
 
     def merge(self, *, owner_id: uuid.UUID, file_ids: list[uuid.UUID]) -> Job:
         if len(file_ids) < 2:
@@ -151,7 +155,8 @@ class PDFService:
 
     def get_metadata(self, *, owner_id: uuid.UUID, file_id: uuid.UUID) -> dict:
         """Synchronous — metadata reads are fast and don't warrant a job."""
-        self._assert_owns_all(owner_id, [file_id])
+        from app.models.file_share import SharePermission
+        self._assert_owns_all(owner_id, [file_id], required_permission=SharePermission.VIEW)
         file = self.files.get_by_id(file_id)
         storage = get_storage_provider()
         return sec.get_metadata(storage.read(file.storage_key))
@@ -201,7 +206,8 @@ class PDFService:
 
     def verify_signature(self, *, owner_id: uuid.UUID, file_id: uuid.UUID) -> dict:
         """Synchronous — a metadata read, same rationale as get_metadata."""
-        self._assert_owns_all(owner_id, [file_id])
+        from app.models.file_share import SharePermission
+        self._assert_owns_all(owner_id, [file_id], required_permission=SharePermission.VIEW)
         file = self.files.get_by_id(file_id)
         storage = get_storage_provider()
         return sec.verify_signature(storage.read(file.storage_key))
@@ -246,7 +252,8 @@ class PDFService:
 
     def get_bookmarks(self, *, owner_id: uuid.UUID, file_id: uuid.UUID) -> list[dict]:
         """Synchronous — same rationale as get_metadata: a fast metadata read."""
-        self._assert_owns_all(owner_id, [file_id])
+        from app.models.file_share import SharePermission
+        self._assert_owns_all(owner_id, [file_id], required_permission=SharePermission.VIEW)
         file = self.files.get_by_id(file_id)
         storage = get_storage_provider()
         return pdf_engine.get_bookmarks(storage.read(file.storage_key))

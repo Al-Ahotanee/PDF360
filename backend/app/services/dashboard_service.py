@@ -50,3 +50,8 @@ class DashboardService:
     def get_recent_jobs(self, owner_id: uuid.UUID, limit: int = 20) -> list[Job]:
         stmt = select(Job).where(Job.owner_id == owner_id).order_by(Job.created_at.desc()).limit(limit)
         return list(self.db.execute(stmt).scalars().all())
+
+    def get_recent_activity(self, user_id: uuid.UUID, limit: int = 20):
+        from app.repositories.activity_repository import ActivityRepository
+        return ActivityRepository(self.db).list_for_user(user_id, limit=limit)
+

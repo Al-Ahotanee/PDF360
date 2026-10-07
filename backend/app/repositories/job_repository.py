@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.activity import ActivityLog
 from app.models.job import Job, JobStatus, JobType
 
 
@@ -31,6 +32,15 @@ class JobRepository:
     def mark_done(self, job: Job, result: dict) -> Job:
         job.status = JobStatus.DONE
         job.result = result
+        self.db.add(
+            ActivityLog(
+                user_id=job.owner_id,
+                action=f"job.{job.job_type.value}",
+                resource_type="job",
+                resource_id=job.id,
+                metadata_json={"result": result},
+            )
+        )
         self.db.commit()
         self.db.refresh(job)
         return job

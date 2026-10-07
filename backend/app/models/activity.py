@@ -29,6 +29,7 @@ class Comment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # Page/position anchor for annotation-style comments on the PDF viewer.
     page_number: Mapped[int | None] = mapped_column(nullable=True)
     position: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    mentioned_user_ids: Mapped[list] = mapped_column(JSONB, default=list)
 
 
 class ActivityLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):

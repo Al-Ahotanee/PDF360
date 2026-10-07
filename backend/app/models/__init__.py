@@ -15,6 +15,7 @@ from app.models import (  # noqa: F401
     billing,
     document_version,
     file,
+    file_share,
     job,
     role,
     system,

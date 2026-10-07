@@ -48,3 +48,43 @@ export type ApiKey = {
 };
 
 export type ApiKeyCreated = ApiKey & { raw_key: string };
+
+export type SharePermission = "view" | "comment" | "edit";
+
+export type FileShare = {
+  id: string;
+  file_id: string;
+  owner_id: string;
+  shared_with_id: string;
+  permission: SharePermission;
+  created_at: string;
+  shared_with_email: string | null;
+};
+
+export type SharedWithMe = {
+  id: string;
+  file_id: string;
+  original_filename: string;
+  mime_type: string;
+  size_bytes: number;
+  permission: SharePermission;
+  owner_email: string | null;
+  created_at: string;
+};
+
+export type ActivityLogEntry = {
+  id: string;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+};
+
+export type FeatureFlag = {
+  key: string;
+  value: Record<string, unknown>;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+};
