@@ -1,0 +1,92 @@
+# PDF360 — full stack. `docker compose up --build` runs everything:
+# Postgres, Redis, the FastAPI API, a Celery worker (same image as the
+# API — see backend/Dockerfile), and the Next.js frontend.
+#
+# Note: this compose file is for running the pre-built stack (e.g. a VPS
+# or your own machine). If you're using managed Neon Postgres instead of
+# the bundled `db` service, remove that service and point DATABASE_URL at
+# your Neon connection string in the .env file referenced below.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdf360
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pdf360}
+      POSTGRES_DB: pdf360
+    volumes:
+      - pdf360_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdf360"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://pdf360:${POSTGRES_PASSWORD:-pdf360}@db:5432/pdf360
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - pdf360_storage:/app/storage
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.db.seed &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://pdf360:${POSTGRES_PASSWORD:-pdf360}@db:5432/pdf360
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    volumes:
+      - pdf360_storage:/app/storage
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api/v1}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  pdf360_db_data:
+  pdf360_storage:
