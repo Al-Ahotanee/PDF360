@@ -47,22 +47,28 @@ class ShareService:
                 detail="You cannot share a file with yourself.",
             )
 
+        perm_enum = SharePermission(permission) if isinstance(permission, str) else permission
+
         share = self.shares.upsert(
             file_id=file_id,
             owner_id=owner_id,
             shared_with_id=target_user.id,
-            permission=permission,
+            permission=perm_enum,
         )
 
-        owner_user = self.users.get_by_id(owner_id)
-        owner_name = (owner_user.full_name or owner_user.email) if owner_user else "Someone"
+        try:
+            owner_user = self.users.get_by_id(owner_id)
+            owner_name = (owner_user.full_name or owner_user.email) if owner_user else "Someone"
 
-        self.notifications.create_for_user(
-            user_id=target_user.id,
-            title="File shared with you",
-            body=f"{owner_name} shared '{file.original_filename}' with you ({permission.value} access).",
-            metadata={"type": "file_share", "file_id": str(file_id), "permission": permission.value},
-        )
+            self.notifications.create_for_user(
+                user_id=target_user.id,
+                title="File shared with you",
+                body=f"{owner_name} shared '{file.original_filename}' with you ({perm_enum.value} access).",
+                metadata={"type": "file_share", "file_id": str(file_id), "permission": perm_enum.value},
+            )
+        except Exception as notif_err:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not send share notification: {notif_err}")
 
         return share
 
