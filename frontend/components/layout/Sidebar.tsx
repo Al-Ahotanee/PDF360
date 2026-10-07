@@ -43,16 +43,21 @@ const NAV_SECTIONS = [
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2 px-2">
-      {/* Signature mark: three stacked, slightly fanned "pages" */}
-      <div className="relative h-8 w-8 shrink-0">
-        <div className="absolute inset-0 translate-x-1 translate-y-1 rotate-6 rounded-sm bg-signal/40" />
-        <div className="absolute inset-0 translate-x-0.5 translate-y-0.5 rotate-3 rounded-sm bg-signal/70" />
-        <div className="absolute inset-0 rounded-sm bg-signal" />
+    <div className="flex items-center gap-3 px-2 py-1">
+      {/* Signature mark: layered glowing isometric pages */}
+      <div className="relative h-9 w-9 shrink-0">
+        <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rotate-6 rounded-lg bg-signal/30" />
+        <div className="absolute inset-0 translate-x-0.5 translate-y-0.5 rotate-3 rounded-lg bg-signal/60" />
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-gradient-to-tr from-signal-dark via-signal to-signal-light shadow-md shadow-signal/20">
+          <span className="font-display text-sm font-black text-ink">360</span>
+        </div>
       </div>
-      <span className="font-display text-lg font-semibold tracking-tight text-white">
-        PDF360
-      </span>
+      <div>
+        <span className="font-display text-lg font-bold tracking-tight text-white flex items-center gap-0.5">
+          PDF<span className="text-signal">360</span>
+        </span>
+        <p className="text-[10px] font-medium text-slate-400 tracking-wide uppercase">Workspace Pro</p>
+      </div>
     </div>
   );
 }
@@ -83,14 +88,16 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
+                    className={`group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                       active
-                        ? "bg-ink-light text-white"
-                        : "text-slate-300 hover:bg-ink-light/60 hover:text-white"
+                        ? "bg-signal/15 text-signal font-semibold shadow-sm shadow-signal/10 border-l-2 border-signal"
+                        : "text-slate-400 hover:bg-white/[0.05] hover:text-white"
                     }`}
                   >
-                    <Icon size={17} strokeWidth={active ? 2.25 : 1.75} />
-                    {item.label}
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} strokeWidth={active ? 2.25 : 1.75} className={active ? "text-signal" : "text-slate-400 group-hover:text-white"} />
+                      <span>{item.label}</span>
+                    </div>
                   </Link>
                 );
               })}
@@ -98,13 +105,15 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-      <Link
-        href="/settings"
-        className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-400 hover:bg-ink-light/60 hover:text-white"
-      >
-        <Settings size={17} strokeWidth={1.75} />
-        Settings
-      </Link>
+      <div className="pt-4 border-t border-white/5 space-y-1">
+        <Link
+          href="/settings"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/[0.05] hover:text-white transition"
+        >
+          <Settings size={18} strokeWidth={1.75} />
+          Settings & Preferences
+        </Link>
+      </div>
     </aside>
   );
 }
