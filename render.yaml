@@ -1,10 +1,12 @@
-# PDF360 — Render Infrastructure as Code Blueprint
-# Deploy the entire stack (FastAPI Backend + Next.js Frontend + Celery Worker + Redis + Neon Postgres)
-# See docs/03-deployment-render-neon.md for detailed setup instructions.
+# PDF360 — 100% Free Tier Render Blueprint (No Credit Card Required)
+# Architecture:
+# - pdf360-api: FastAPI Backend + embedded Celery Worker + internal Redis (Free Web Service)
+# - pdf360-frontend: Next.js Frontend (Free Web Service)
+# - Database: Neon Free Serverless PostgreSQL (external DATABASE_URL)
 
 services:
   # ---------------------------------------------------------------------------
-  # 1. Backend REST API (FastAPI + PyMuPDF + LibreOffice + Tesseract + OCR)
+  # 1. Backend REST API + Embedded Celery Worker + Redis Queue (100% Free Tier)
   # ---------------------------------------------------------------------------
   - type: web
     name: pdf360-api
@@ -31,27 +33,11 @@ services:
         value: "60"
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: "7"
-      # Neon PostgreSQL Connection String (user fills this in the Render dashboard)
+      # Neon PostgreSQL Connection String (Free Serverless Postgres)
       # e.g.: postgresql://user:pass@ep-cool-fog-123456.us-east-2.aws.neon.tech/pdf360?sslmode=require
       - key: DATABASE_URL
         sync: false
-      # Redis Connection (Internal Render Redis or Upstash)
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      # Storage Provider: "local" or "s3" (AWS S3, Cloudflare R2, MinIO, Supabase)
+      # Storage Provider: "local" (default) or "s3" (Cloudflare R2 / AWS S3 / Supabase)
       - key: STORAGE_PROVIDER
         value: local
       - key: LOCAL_STORAGE_PATH
@@ -66,86 +52,12 @@ services:
         sync: false
       - key: S3_ENDPOINT_URL
         sync: false
-      # CORS: Allow requests from frontend (set to * or specific frontend domain)
+      # CORS: Allow requests from frontend
       - key: CORS_ORIGINS
         value: "*"
 
   # ---------------------------------------------------------------------------
-  # 2. Celery Background Worker (Asynchronous PDF operations)
-  # ---------------------------------------------------------------------------
-  - type: worker
-    name: pdf360-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: celery -A app.workers.celery_app worker --loglevel=info
-    plan: starter
-    region: oregon
-    envVars:
-      - key: APP_NAME
-        value: PDF360
-      - key: APP_ENV
-        value: production
-      - key: SECRET_KEY
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: SECRET_KEY
-      - key: DATABASE_URL
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: DATABASE_URL
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: pdf360-redis
-          property: connectionString
-      - key: STORAGE_PROVIDER
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: STORAGE_PROVIDER
-      - key: LOCAL_STORAGE_PATH
-        value: /app/storage
-      - key: S3_BUCKET_NAME
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: S3_BUCKET_NAME
-      - key: S3_ACCESS_KEY
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: S3_ACCESS_KEY
-      - key: S3_SECRET_KEY
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: S3_SECRET_KEY
-      - key: S3_REGION
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: S3_REGION
-      - key: S3_ENDPOINT_URL
-        fromService:
-          type: web
-          name: pdf360-api
-          envVarKey: S3_ENDPOINT_URL
-
-  # ---------------------------------------------------------------------------
-  # 3. Next.js Frontend Web Service
+  # 2. Next.js Frontend Web Service (100% Free Tier)
   # ---------------------------------------------------------------------------
   - type: web
     name: pdf360-frontend
@@ -160,13 +72,3 @@ services:
       # Public URL of the FastAPI backend (e.g. https://pdf360-api.onrender.com/api/v1)
       - key: NEXT_PUBLIC_API_BASE_URL
         sync: false
-
-
-  # ---------------------------------------------------------------------------
-  # 4. Redis Service
-  # ---------------------------------------------------------------------------
-  - type: redis
-    name: pdf360-redis
-    plan: free
-    region: oregon
-    ipAllowList: [] # internal private access only

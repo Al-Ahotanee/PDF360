@@ -61,16 +61,15 @@ This guide covers deploying PDF360 to **Render.com** using the provided Infrastr
 1. Log in to your [Render Dashboard](https://dashboard.render.com).
 2. Click **New +** in the top navigation and select **Blueprint**.
 3. Connect your GitHub account and select your repository: **`Al-Ahotanee/PDF360`**.
-4. Render will parse `render.yaml` and display the stack components:
-   - `pdf360-api` (Web Service, Docker)
-   - `pdf360-worker` (Background Worker, Docker)
-   - `pdf360-frontend` (Web Service, Docker)
-   - `pdf360-redis` (Redis Instance)
+4. Render will parse `render.yaml` and display the **100% Free** stack components:
+   - `pdf360-api` (Free Web Service — FastAPI + Embedded Celery Worker + Redis)
+   - `pdf360-frontend` (Free Web Service — Next.js)
+   *(Because both services use Render's Free tier, Render will NOT require credit card details).*
 5. In the Blueprint form:
    - Under **`pdf360-api`**, paste your Neon **`DATABASE_URL`** copied from Step 2.
-   - Under **`pdf360-frontend`**, you can provide your **`NEXT_PUBLIC_API_BASE_URL`** (e.g. `https://pdf360-api.onrender.com/api/v1` or update it after the API service URL is generated).
+   - Under **`pdf360-frontend`**, you can provide your **`NEXT_PUBLIC_API_BASE_URL`** (e.g. `https://pdf360-api.onrender.com/api/v1` or configure it after deploy).
 6. Click **Apply**.
-7. Render will automatically build the images, launch the services, and wire up internal networking!
+7. Render will build and deploy both services completely free of charge!
 
 ---
 
