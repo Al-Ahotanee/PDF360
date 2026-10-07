@@ -37,7 +37,13 @@ class FileShare(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
     )
     permission: Mapped[SharePermission] = mapped_column(
-        Enum(SharePermission, name="share_permission"), nullable=False
+        Enum(
+            SharePermission,
+            name="share_permission",
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        nullable=False,
     )
 
     file: Mapped["File"] = relationship()
