@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ShieldCheck } from "lucide-react";
 import { useJob } from "@/hooks/useJob";
 import { apiClient } from "@/lib/api/client";
 
@@ -11,6 +11,16 @@ async function downloadResultFile(fileId: string, filename = "result.pdf") {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+async function downloadAuditCertificate(fileId: string) {
+  const response = await apiClient.get(`/pdf/${fileId}/audit-certificate`, { responseType: "blob" });
+  const url = window.URL.createObjectURL(response.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "audit_certificate.pdf";
   a.click();
   window.URL.revokeObjectURL(url);
 }
@@ -62,6 +72,13 @@ export function JobStatusPanel({ jobId }: { jobId: string | null }) {
             >
               Open in Editor
             </Link>
+            <button
+              onClick={() => downloadAuditCertificate(resultFileId)}
+              className="inline-flex items-center gap-1 rounded-lg border border-green-600/30 bg-white px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-50 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300"
+            >
+              <ShieldCheck size={13} />
+              Audit Certificate
+            </button>
           </>
         )}
         {resultFileIds?.map((id, i) => (

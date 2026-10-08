@@ -86,4 +86,8 @@ def preview_page(file_id: uuid.UUID, page_number: int, db: Session = Depends(get
     images = pdf_to_images(service.read_bytes(file), fmt="png", dpi=100)
     if page_number < 1 or page_number > len(images):
         raise PDFEngineError(f"Page {page_number} out of range (document has {len(images)} pages).")
-    return StreamingResponse(io.BytesIO(images[page_number - 1]), media_type="image/png")
+    return StreamingResponse(
+        io.BytesIO(images[page_number - 1]),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"},
+    )

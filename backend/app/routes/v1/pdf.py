@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
@@ -219,4 +219,36 @@ def get_bookmarks(file_id: uuid.UUID, db: Session = Depends(get_db), user: User 
 def set_bookmarks(data: BookmarksSetRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return PDFService(db).set_bookmarks(
         owner_id=user.id, file_id=data.file_id, bookmarks=[b.model_dump() for b in data.bookmarks],
+    )
+
+
+@router.get("/{file_id}/audit-certificate")
+def get_audit_certificate(
+    file_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    import io
+    from fastapi.responses import StreamingResponse
+    from app.services.file_service import FileService
+    from app.services.audit_service import AuditService
+
+    file = FileService(db).get_accessible_file(file_id=file_id, user_id=user.id)
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    user_agent = request.headers.get("user-agent", "Web Browser")
+
+    cert_bytes = AuditService(db).generate_certificate(
+        file=file,
+        signer_user=user,
+        client_ip=client_ip,
+        user_agent=user_agent,
+    )
+    return StreamingResponse(
+        io.BytesIO(cert_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="certificate_{file.original_filename}"',
+            "Content-Length": str(len(cert_bytes)),
+        },
     )

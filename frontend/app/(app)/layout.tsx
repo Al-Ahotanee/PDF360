@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth/context";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { GlobalDropzoneOverlay } from "@/components/files/GlobalDropzoneOverlay";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -23,6 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <GlobalDropzoneOverlay />
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
     </div>

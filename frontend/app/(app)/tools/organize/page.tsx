@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { LayoutGrid, SlidersHorizontal } from "lucide-react";
 import { Topbar } from "@/components/layout/Topbar";
 import { FileSelect } from "@/components/tools/FileSelect";
 import { JobStatusPanel } from "@/components/tools/JobStatusPanel";
 import { ToolCard, PrimaryButton } from "@/components/tools/ToolCard";
+import { VisualPageOrganizer } from "@/components/tools/VisualPageOrganizer";
 import { apiClient } from "@/lib/api/client";
 import type { Job } from "@/types/api";
 
 export default function OrganizeToolsPage() {
+  const [organizeMode, setOrganizeMode] = useState<"visual" | "tools">("visual");
+  const [visualFileId, setVisualFileId] = useState("");
+
   // Merge
   const [mergeFiles, setMergeFiles] = useState<string[]>([]);
   const [mergeJobId, setMergeJobId] = useState<string | null>(null);
@@ -201,7 +206,56 @@ export default function OrganizeToolsPage() {
     <>
       <Topbar title="Organize" />
       <main className="flex-1 space-y-4 overflow-y-auto p-6">
-        <ToolCard title="Merge PDFs" description="Combine multiple files into one, in the order selected.">
+        {/* Mode Selector Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
+          <button
+            onClick={() => setOrganizeMode("visual")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              organizeMode === "visual"
+                ? "bg-ink text-white dark:bg-white dark:text-ink shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            }`}
+          >
+            <LayoutGrid size={16} />
+            Visual Page Organizer
+          </button>
+          <button
+            onClick={() => setOrganizeMode("tools")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              organizeMode === "tools"
+                ? "bg-ink text-white dark:bg-white dark:text-ink shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            }`}
+          >
+            <SlidersHorizontal size={16} />
+            Individual Tool Forms
+          </button>
+        </div>
+
+        {organizeMode === "visual" ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-ink/30">
+            <div className="mb-4 max-w-sm">
+              <FileSelect
+                value={visualFileId}
+                onChange={(v) => setVisualFileId(v as string)}
+                label="Choose document to visually organize"
+              />
+            </div>
+            {visualFileId ? (
+              <VisualPageOrganizer fileId={visualFileId} />
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-200 p-12 text-center text-sm text-slate-500 dark:border-slate-800">
+                <LayoutGrid size={32} className="mx-auto mb-3 text-slate-400" />
+                <p className="font-semibold text-ink dark:text-white">Interactive Visual Page Organizer</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Select any PDF document above to view all rendered pages and visually reorder, rotate, or exclude pages with 1 click.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <ToolCard title="Merge PDFs" description="Combine multiple files into one, in the order selected.">
           <FileSelect value={mergeFiles} onChange={(v) => setMergeFiles(v as string[])} multiple label="Files to merge (select 2+)" />
           <div className="mt-3">
             <PrimaryButton onClick={runMerge} disabled={mergeFiles.length < 2}>
@@ -547,6 +601,8 @@ export default function OrganizeToolsPage() {
             </PrimaryButton>
           </div>
         </ToolCard>
+          </div>
+        )}
       </main>
     </>
   );

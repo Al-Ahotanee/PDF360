@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star, Download, Trash2, Share2, Eye, PenTool, Loader2 } from "lucide-react";
+import { Star, Download, Trash2, Share2, Eye, PenTool, Loader2, ShieldCheck } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { useToggleFavorite, useTrashFile } from "@/hooks/useOrganization";
 import { formatBytes, formatRelativeDate } from "@/lib/format";
@@ -45,6 +45,16 @@ export function FileCard({ file, isShared = false }: { file: PDFFile; isShared?:
     const a = document.createElement("a");
     a.href = url;
     a.download = file.original_filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async function handleDownloadCertificate() {
+    const response = await apiClient.get(`/pdf/${file.id}/audit-certificate`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(response.data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `certificate_${file.original_filename}`;
     a.click();
     window.URL.revokeObjectURL(url);
   }
@@ -170,6 +180,14 @@ export function FileCard({ file, isShared = false }: { file: PDFFile; isShared?:
                   <PenTool size={13} className="text-signal" />
                   Edit & Annotate
                 </Link>
+                <button
+                  onClick={handleDownloadCertificate}
+                  title="Download Tamper-Evident Audit Certificate"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/10 hover:text-white transition"
+                >
+                  <ShieldCheck size={13} className="text-signal" />
+                  Audit Certificate
+                </button>
                 <button
                   onClick={handleDownload}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-signal px-3.5 py-1.5 text-xs font-bold text-ink hover:bg-signal-light transition"
