@@ -20,14 +20,23 @@ async def upload_file(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    import logging
+    logger = logging.getLogger("pdf360.api")
     service = FileService(db)
-    file = service.upload(
-        owner_id=user.id,
-        filename=upload.filename,
-        mime_type=upload.content_type or "application/octet-stream",
-        file_obj=upload.file,
-    )
-    return file
+    try:
+        file = service.upload(
+            owner_id=user.id,
+            filename=upload.filename or "uploaded_file.pdf",
+            mime_type=upload.content_type or "application/pdf",
+            file_obj=upload.file,
+        )
+        return file
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Error uploading file '{upload.filename}': {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to process upload: {str(exc)}")
+
 
 
 @router.get("", response_model=list[FileOut])
@@ -66,9 +75,21 @@ def download_file(file_id: uuid.UUID, db: Session = Depends(get_db), user: User 
 def get_page_count_endpoint(file_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service = FileService(db)
     file = service.get_accessible_file(file_id=file_id, user_id=user.id)
-    from app.services.pdf_engine.core import get_page_count
+    from app.services.pdf_engine.core import get_page_count, PDFEngineError
 
-    return {"page_count": get_page_count(service.read_bytes(file))}
+    try:
+        content = service.read_bytes(file)
+    except Exception as e:
+        import logging
+        logging.getLogger("pdf360.api").warning(f"File {file_id} ({file.storage_key}) content not found: {e}")
+        raise HTTPException(status_code=404, detail="File content could not be retrieved from storage.")
+
+    try:
+        return {"page_count": get_page_count(content)}
+    except PDFEngineError as pe:
+        raise HTTPException(status_code=400, detail=str(pe))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Failed to calculate page count. Document may be corrupt.")
 
 
 @router.get("/{file_id}/preview/{page_number}")
@@ -83,9 +104,21 @@ def preview_page(file_id: uuid.UUID, page_number: int, db: Session = Depends(get
     from app.services.pdf_engine.conversion import pdf_to_images
     from app.services.pdf_engine.core import PDFEngineError
 
-    images = pdf_to_images(service.read_bytes(file), fmt="png", dpi=100)
+    try:
+        content = service.read_bytes(file)
+    except Exception as e:
+        import logging
+        logging.getLogger("pdf360.api").warning(f"File {file_id} preview content not found: {e}")
+        raise HTTPException(status_code=404, detail="File content could not be retrieved from storage.")
+
+    try:
+        images = pdf_to_images(content, fmt="png", dpi=100)
+    except Exception as pe:
+        raise HTTPException(status_code=400, detail=f"Failed to render PDF preview: {pe}")
+
     if page_number < 1 or page_number > len(images):
-        raise PDFEngineError(f"Page {page_number} out of range (document has {len(images)} pages).")
+        raise HTTPException(status_code=404, detail=f"Page {page_number} out of range (document has {len(images)} pages).")
+
     return StreamingResponse(
         io.BytesIO(images[page_number - 1]),
         media_type="image/png",

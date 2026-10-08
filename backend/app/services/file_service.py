@@ -4,6 +4,7 @@ from typing import BinaryIO
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.file import File
 from app.repositories.file_repository import FileRepository
 from app.services.storage.factory import get_storage_provider
