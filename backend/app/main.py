@@ -50,7 +50,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled Exception on {request.method} {request.url.path}: {exc}\n{traceback.format_exc()}")
     response = JSONResponse(
         status_code=500,
-        content={"detail": str(exc) if settings.DEBUG else "Internal server error. Check backend logs."},
+        content={"detail": str(exc)},
     )
     # Ensure CORS headers are present even on uncaught 500 crashes
     response.headers["Access-Control-Allow-Origin"] = "*"
