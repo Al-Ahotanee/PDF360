@@ -28,7 +28,11 @@ export function FileCard({ file, isShared = false }: { file: PDFFile; isShared?:
         const url = window.URL.createObjectURL(response.data);
         setBlobUrl(url);
       } catch (err: any) {
-        setBlobError("Failed to load PDF preview. File may still be processing or unavailable.");
+        if (err?.response?.status === 404) {
+          setBlobError("This document's binary data was stored on a previous temporary instance before cloud persistence was connected. Please re-upload your PDF to view and edit.");
+        } else {
+          setBlobError("Failed to load PDF preview. File may still be processing or unavailable.");
+        }
       } finally {
         setIsLoadingBlob(false);
       }
